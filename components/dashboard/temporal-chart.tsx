@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   Area,
@@ -7,22 +7,33 @@ import {
   XAxis,
   YAxis,
   ResponsiveContainer,
-} from "recharts"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-import type { TemporalPrediction } from "@/lib/types"
+} from "@/components/ui/chart";
+import type { TemporalPrediction } from "@/lib/types";
 
 interface TemporalChartProps {
-  data: TemporalPrediction[]
+  data: TemporalPrediction[];
 }
 
 export function TemporalChart({ data }: TemporalChartProps) {
+  const safeData = Array.isArray(data) ? data : [];
+
   return (
-    <Card className="overflow-hidden border-border/50 bg-card animate-fade-in-up" style={{ animationDelay: "500ms" }}>
+    <Card
+      className="overflow-hidden border-border/50 bg-card animate-fade-in-up"
+      style={{ animationDelay: "500ms" }}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Previsao de Profundidade
@@ -50,7 +61,10 @@ export function TemporalChart({ data }: TemporalChartProps) {
           className="h-[300px] w-full"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={safeData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="gradientMean" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
@@ -81,12 +95,17 @@ export function TemporalChart({ data }: TemporalChartProps) {
                 content={
                   <ChartTooltipContent
                     formatter={(value, name) => {
-                      const labels: Record<string, string> = { mean: "Media", max: "Maximo", min: "Minimo" }
+                      const labels: Record<string, string> = {
+                        mean: "Media",
+                        max: "Maximo",
+                        min: "Minimo",
+                      };
                       return (
                         <span>
-                          {labels[name as string] || name}: <strong>{Number(value).toFixed(1)} mm</strong>
+                          {labels[name as string] || name}:{" "}
+                          <strong>{Number(value).toFixed(1)} mm</strong>
                         </span>
-                      )
+                      );
                     }}
                   />
                 }
@@ -132,5 +151,5 @@ export function TemporalChart({ data }: TemporalChartProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

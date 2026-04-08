@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
+import { useMemo } from "react";
 import {
   ScatterChart,
   Scatter,
@@ -10,64 +10,79 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   ComposedChart,
-} from "recharts"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+} from "recharts";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-} from "@/components/ui/chart"
-import type { ExponentialFitPoint } from "@/lib/types"
+} from "@/components/ui/chart";
+import type { ExponentialFitPoint } from "@/lib/types";
 
 interface ExponentialChartProps {
-  data: ExponentialFitPoint[]
+  data: ExponentialFitPoint[];
 }
 
 export function ExponentialChart({ data }: ExponentialChartProps) {
+  // Garantir que data é sempre um array
+  const safeData = Array.isArray(data) ? data : [];
+
   // Generate exponential fit curve: F(x) = a * e^(-b * x)
   const { curveData, params } = useMemo(() => {
     // Simple exponential regression from data
-    const a = 14.5
-    const b = 0.15
+    const a = 14.5;
+    const b = 0.15;
 
-    const curve = []
+    const curve = [];
     for (let x = 0; x <= 22; x += 0.5) {
       curve.push({
         depth: x,
         fittedLength: a * Math.exp(-b * x),
-      })
+      });
     }
-    return { curveData: curve, params: { a, b } }
-  }, [])
+    return { curveData: curve, params: { a, b } };
+  }, []);
 
   // Merge scatter + curve
   const mergedData = useMemo(() => {
-    const map = new Map<number, { depth: number; length?: number; fittedLength?: number }>()
+    const map = new Map<
+      number,
+      { depth: number; length?: number; fittedLength?: number }
+    >();
 
     curveData.forEach((p) => {
-      map.set(p.depth, { depth: p.depth, fittedLength: p.fittedLength })
-    })
+      map.set(p.depth, { depth: p.depth, fittedLength: p.fittedLength });
+    });
 
-    data.forEach((p) => {
-      const existing = map.get(p.depth)
+    safeData.forEach((p: any) => {
+      const existing = map.get(p.depth);
       if (existing) {
-        existing.length = p.length
+        existing.length = p.length;
       } else {
-        map.set(p.depth, { depth: p.depth, length: p.length })
+        map.set(p.depth, { depth: p.depth, length: p.length });
       }
-    })
+    });
 
-    return Array.from(map.values()).sort((a, b) => a.depth - b.depth)
-  }, [data, curveData])
+    return Array.from(map.values()).sort((a, b) => a.depth - b.depth);
+  }, [safeData, curveData]);
 
   return (
-    <Card className="overflow-hidden border-border/50 bg-card animate-fade-in-up" style={{ animationDelay: "600ms" }}>
+    <Card
+      className="overflow-hidden border-border/50 bg-card animate-fade-in-up"
+      style={{ animationDelay: "600ms" }}
+    >
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Ajuste Exponencial
         </CardTitle>
         <CardDescription className="text-xs text-muted-foreground/70">
-          {'Geometria do defeito: F(x) = a * e^(-b * x)'}
+          {"Geometria do defeito: F(x) = a * e^(-b * x)"}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-4">
@@ -85,7 +100,10 @@ export function ExponentialChart({ data }: ExponentialChartProps) {
           className="h-[300px] w-full"
         >
           <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={mergedData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <ComposedChart
+              data={mergedData}
+              margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
               <XAxis
                 dataKey="depth"
@@ -94,7 +112,13 @@ export function ExponentialChart({ data }: ExponentialChartProps) {
                 axisLine={false}
                 tick={{ fill: "#94A3B8" }}
                 tickFormatter={(v) => `${v}mm`}
-                label={{ value: "Profundidade (mm)", position: "insideBottom", offset: -2, fontSize: 10, fill: "#94A3B8" }}
+                label={{
+                  value: "Profundidade (mm)",
+                  position: "insideBottom",
+                  offset: -2,
+                  fontSize: 10,
+                  fill: "#94A3B8",
+                }}
               />
               <YAxis
                 fontSize={11}
@@ -102,7 +126,14 @@ export function ExponentialChart({ data }: ExponentialChartProps) {
                 axisLine={false}
                 tick={{ fill: "#94A3B8" }}
                 tickFormatter={(v) => `${v}mm`}
-                label={{ value: "Comprimento (mm)", angle: -90, position: "insideLeft", offset: 10, fontSize: 10, fill: "#94A3B8" }}
+                label={{
+                  value: "Comprimento (mm)",
+                  angle: -90,
+                  position: "insideLeft",
+                  offset: 10,
+                  fontSize: 10,
+                  fill: "#94A3B8",
+                }}
               />
               <ChartTooltip
                 content={
@@ -111,12 +142,13 @@ export function ExponentialChart({ data }: ExponentialChartProps) {
                       const labels: Record<string, string> = {
                         length: "Real",
                         fittedLength: "Ajustado",
-                      }
+                      };
                       return (
                         <span>
-                          {labels[name as string] || name}: <strong>{Number(value).toFixed(1)} mm</strong>
+                          {labels[name as string] || name}:{" "}
+                          <strong>{Number(value).toFixed(1)} mm</strong>
                         </span>
-                      )
+                      );
                     }}
                   />
                 }
@@ -157,5 +189,5 @@ export function ExponentialChart({ data }: ExponentialChartProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

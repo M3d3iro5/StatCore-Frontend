@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { AlertTriangle, CheckCircle2, Info, AlertOctagon } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import type { Recommendation } from "@/lib/types"
-import { cn } from "@/lib/utils"
+import { AlertTriangle, CheckCircle2, Info, AlertOctagon } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Recommendation } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface RecommendationsProps {
-  data: Recommendation[]
+  data: Recommendation[];
 }
 
 const typeConfig = {
@@ -38,44 +38,57 @@ const typeConfig = {
     iconColor: "text-[#EF4444]",
     label: "Critico",
   },
-}
+};
 
 export function Recommendations({ data }: RecommendationsProps) {
+  const safeData = Array.isArray(data) ? data : [];
+
   return (
-    <Card className="overflow-hidden border-border/50 bg-card animate-fade-in-up" style={{ animationDelay: "900ms" }}>
+    <Card
+      className="overflow-hidden border-border/50 bg-card animate-fade-in-up"
+      style={{ animationDelay: "900ms" }}
+    >
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           Recomendacoes e Alertas
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        {data.map((rec, i) => {
-          const config = typeConfig[rec.type]
-          const Icon = config.icon
-          return (
-            <div
-              key={i}
-              className={cn(
-                "flex items-start gap-3 rounded-lg border p-3.5 transition-all duration-200 hover:shadow-sm",
-                config.bg,
-                config.border
-              )}
-            >
-              <div className={cn("mt-0.5 shrink-0", config.iconColor)}>
-                <Icon className="h-4.5 w-4.5" />
+        {safeData.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+            <p>Sem recomendações no momento</p>
+          </div>
+        ) : (
+          safeData.map((rec, i) => {
+            if (!rec || !rec.type) return null;
+            const config = typeConfig[rec.type as keyof typeof typeConfig];
+            if (!config) return null;
+            const Icon = config.icon;
+            return (
+              <div
+                key={i}
+                className={cn(
+                  "flex items-start gap-3 rounded-lg border p-3.5 transition-all duration-200 hover:shadow-sm",
+                  config.bg,
+                  config.border,
+                )}
+              >
+                <div className={cn("mt-0.5 shrink-0", config.iconColor)}>
+                  <Icon className="h-4.5 w-4.5" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {config.label}
+                  </p>
+                  <p className="mt-0.5 text-sm text-foreground">
+                    {rec.message}
+                  </p>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  {config.label}
-                </p>
-                <p className="mt-0.5 text-sm text-foreground">
-                  {rec.message}
-                </p>
-              </div>
-            </div>
-          )
-        })}
+            );
+          })
+        )}
       </CardContent>
     </Card>
-  )
+  );
 }

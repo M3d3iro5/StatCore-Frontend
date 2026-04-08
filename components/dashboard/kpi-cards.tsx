@@ -1,54 +1,109 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { Activity, AlertTriangle, Ruler, ArrowDown, TrendingDown } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
-import type { AnalysisData } from "@/lib/types"
-import { getERFColor } from "@/lib/mock-data"
-import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react";
+import {
+  Activity,
+  AlertTriangle,
+  Ruler,
+  ArrowDown,
+  TrendingDown,
+} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import type { AnalysisData } from "@/lib/types";
+import { getERFColor } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
 
-function AnimatedNumber({ value, decimals = 2, duration = 1200 }: { value: number; decimals?: number; duration?: number }) {
-  const [current, setCurrent] = useState(0)
+function AnimatedNumber({
+  value,
+  decimals = 2,
+  duration = 1200,
+}: {
+  value: number;
+  decimals?: number;
+  duration?: number;
+}) {
+  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
-    let start = 0
-    const end = value
-    const startTime = performance.now()
+    let start = 0;
+    const end = value;
+    const startTime = performance.now();
 
     function animate(now: number) {
-      const elapsed = now - startTime
-      const progress = Math.min(elapsed / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setCurrent(start + (end - start) * eased)
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCurrent(start + (end - start) * eased);
       if (progress < 1) {
-        requestAnimationFrame(animate)
+        requestAnimationFrame(animate);
       }
     }
 
-    requestAnimationFrame(animate)
-  }, [value, duration])
+    requestAnimationFrame(animate);
+  }, [value, duration]);
 
-  return <span className="font-mono tabular-nums">{current.toFixed(decimals)}</span>
+  return (
+    <span className="font-mono tabular-nums">{current.toFixed(decimals)}</span>
+  );
 }
 
 interface KPICardsProps {
-  data: AnalysisData
+  data: Partial<AnalysisData & { erfValue?: number; confidence?: number }>;
 }
 
 const statusConfig = {
-  OK: { label: "SEGURO", color: "text-success", bg: "bg-success/10", border: "border-success/20" },
-  ATTENTION: { label: "ATENCAO", color: "text-warning", bg: "bg-warning/10", border: "border-warning/20" },
-  CRITICAL: { label: "CRITICO", color: "text-critical", bg: "bg-critical/10", border: "border-critical/20" },
-}
+  OK: {
+    label: "SEGURO",
+    color: "text-success",
+    bg: "bg-success/10",
+    border: "border-success/20",
+  },
+  ATTENTION: {
+    label: "ATENCAO",
+    color: "text-warning",
+    bg: "bg-warning/10",
+    border: "border-warning/20",
+  },
+  CRITICAL: {
+    label: "CRITICO",
+    color: "text-critical",
+    bg: "bg-critical/10",
+    border: "border-critical/20",
+  },
+  warning: {
+    label: "ATENCAO",
+    color: "text-warning",
+    bg: "bg-warning/10",
+    border: "border-warning/20",
+  },
+  good: {
+    label: "SEGURO",
+    color: "text-success",
+    bg: "bg-success/10",
+    border: "border-success/20",
+  },
+  critical: {
+    label: "CRITICO",
+    color: "text-critical",
+    bg: "bg-critical/10",
+    border: "border-critical/20",
+  },
+};
 
 export function KPICards({ data }: KPICardsProps) {
-  const erfColor = getERFColor(data.erf)
-  const status = statusConfig[data.status]
+  if (!data) {
+    return null;
+  }
+
+  const erfValue = data.erf ?? data.erfValue ?? 0;
+  const erfColor = getERFColor(erfValue);
+  const statusKey = (data.status as keyof typeof statusConfig) || "warning";
+  const status = statusConfig[statusKey] || statusConfig["warning"];
 
   const cards = [
     {
       title: "ERF Score",
-      value: data.erf,
+      value: erfValue,
       decimals: 2,
       subtitle: "Equivalent Remaining Fraction",
       icon: Activity,
@@ -59,17 +114,17 @@ export function KPICards({ data }: KPICardsProps) {
     {
       title: "Status de Risco",
       value: null,
-      label: status.label,
+      label: status?.label || "DESCONHECIDO",
       subtitle: "Classificacao atual",
       icon: AlertTriangle,
       color: erfColor,
-      statusBg: status.bg,
-      statusColor: status.color,
-      statusBorder: status.border,
+      statusBg: status?.bg || "bg-gray-10",
+      statusColor: status?.color || "text-gray-600",
+      statusBorder: status?.border || "border-gray-20",
     },
     {
       title: "Comprimento",
-      value: data.length,
+      value: data.length ?? 0,
       decimals: 1,
       unit: "mm",
       subtitle: "Defeito detectado",
@@ -78,14 +133,14 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: "Profundidade",
-      value: data.depth,
+      value: data.depth ?? 0,
       decimals: 1,
       unit: "mm",
-      subtitle: `Espessura: ${data.thickness} mm`,
+      subtitle: `Espessura: ${data.thickness ?? 0} mm`,
       icon: ArrowDown,
       color: "#3B82F6",
     },
-  ]
+  ];
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -104,10 +159,15 @@ export function KPICards({ data }: KPICardsProps) {
                 {card.value !== null && card.value !== undefined ? (
                   <div className="mt-2 flex items-baseline gap-1.5">
                     <span className="text-3xl font-bold text-foreground">
-                      <AnimatedNumber value={card.value} decimals={card.decimals} />
+                      <AnimatedNumber
+                        value={card.value}
+                        decimals={card.decimals}
+                      />
                     </span>
                     {card.unit && (
-                      <span className="text-sm font-medium text-muted-foreground">{card.unit}</span>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {card.unit}
+                      </span>
                     )}
                   </div>
                 ) : (
@@ -118,14 +178,16 @@ export function KPICards({ data }: KPICardsProps) {
                         card.statusBg,
                         card.statusColor,
                         card.statusBorder,
-                        "border"
+                        "border",
                       )}
                     >
                       {card.label}
                     </span>
                   </div>
                 )}
-                <p className="mt-2 text-xs text-muted-foreground">{card.subtitle}</p>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {card.subtitle}
+                </p>
                 {card.trend && (
                   <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
                     {card.trendIcon && <card.trendIcon className="h-3 w-3" />}
@@ -148,5 +210,5 @@ export function KPICards({ data }: KPICardsProps) {
         </Card>
       ))}
     </div>
-  )
+  );
 }

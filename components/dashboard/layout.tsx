@@ -1,8 +1,7 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { useTheme } from "next-themes"
+import { useState } from "react";
+import { useTheme } from "next-themes";
 import {
   LayoutDashboard,
   BarChart3,
@@ -17,30 +16,47 @@ import {
   X,
   ChevronRight,
   Activity,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  currentPage?: string;
+  onPageChange?: (page: string) => void;
+  onNewAnalysis?: () => void;
+}
 
 const navItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/", active: true },
-  { icon: BarChart3, label: "Analises", href: "#analises", active: false },
-  { icon: ClipboardList, label: "Historico", href: "#historico", active: false },
-  { icon: Settings, label: "Configuracoes", href: "#config", active: false },
-  { icon: Download, label: "Exportar", href: "#exportar", active: false },
-]
+  { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { id: "analises", icon: BarChart3, label: "Analises" },
+  { id: "historico", icon: ClipboardList, label: "Historico" },
+  { id: "configuracoes", icon: Settings, label: "Configuracoes" },
+  { id: "exportar", icon: Download, label: "Exportar" },
+];
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const { theme, setTheme } = useTheme()
+export function DashboardLayout({
+  children,
+  currentPage = "dashboard",
+  onPageChange,
+  onNewAnalysis,
+}: DashboardLayoutProps) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, setTheme } = useTheme();
+
+  const getPageLabel = () => {
+    const page = navItems.find((item) => item.id === currentPage);
+    return page?.label || "Dashboard";
+  };
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -56,7 +72,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:static lg:translate-x-0",
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Logo */}
@@ -65,8 +81,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <Activity className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-bold tracking-tight text-sidebar-foreground">ERF Analytics</span>
-            <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50">Integridade Estrutural</span>
+            <span className="text-sm font-bold tracking-tight text-sidebar-foreground">
+              ERF Analytics
+            </span>
+            <span className="text-[10px] uppercase tracking-widest text-sidebar-foreground/50">
+              Integridade Estrutural
+            </span>
           </div>
           <Button
             variant="ghost"
@@ -80,7 +100,10 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         {/* New Analysis Button */}
         <div className="px-4 pt-5 pb-2">
-          <Button className="w-full gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shadow-lg shadow-sidebar-primary/25">
+          <Button
+            onClick={onNewAnalysis}
+            className="w-full gap-2 bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90 shadow-lg shadow-sidebar-primary/25"
+          >
             <Plus className="h-4 w-4" />
             Nova Analise
           </Button>
@@ -89,25 +112,31 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         {/* Nav Items */}
         <nav className="flex-1 px-3 py-3">
           <ul className="flex flex-col gap-1">
-            {navItems.map((item) => (
-              <li key={item.label}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                    item.active
-                      ? "bg-sidebar-accent text-sidebar-primary"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
-                  )}
-                >
-                  <item.icon className="h-[18px] w-[18px]" />
-                  {item.label}
-                  {item.active && (
-                    <ChevronRight className="ml-auto h-4 w-4 text-sidebar-primary" />
-                  )}
-                </Link>
-              </li>
-            ))}
+            {navItems.map((item) => {
+              const isActive = item.id === currentPage;
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => {
+                      onPageChange?.(item.id);
+                      setSidebarOpen(false);
+                    }}
+                    className={cn(
+                      "w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-primary"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground",
+                    )}
+                  >
+                    <item.icon className="h-[18px] w-[18px]" />
+                    {item.label}
+                    {isActive && (
+                      <ChevronRight className="ml-auto h-4 w-4 text-sidebar-primary" />
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </nav>
 
@@ -137,6 +166,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           >
             <Menu className="h-5 w-5" />
           </Button>
+          {getPageLabel()}
 
           {/* Breadcrumb */}
           <nav className="hidden items-center gap-1.5 text-sm text-muted-foreground md:flex">
@@ -159,7 +189,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             </Button>
 
             {/* Notifications */}
-            <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative text-muted-foreground hover:text-foreground"
+            >
               <Bell className="h-[18px] w-[18px]" />
               <span className="absolute right-1.5 top-1.5 flex h-2 w-2">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#F59E0B] opacity-75" />
@@ -176,7 +210,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                       EC
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden text-sm font-medium md:inline-flex">Eng. Carlos</span>
+                  <span className="hidden text-sm font-medium md:inline-flex">
+                    Eng. Carlos
+                  </span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -191,11 +227,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
         {/* Content */}
         <main className="flex-1 overflow-auto">
-          <div className="p-4 lg:p-6">
-            {children}
-          </div>
+          <div className="p-4 lg:p-6">{children}</div>
         </main>
       </div>
     </div>
-  )
+  );
 }
