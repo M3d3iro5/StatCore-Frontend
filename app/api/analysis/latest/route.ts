@@ -9,7 +9,7 @@ import { AnalysisDataSchema } from "@/lib/api-schemas";
 export async function GET(request: NextRequest) {
   try {
     // Requisição para o backend Python
-    const analysisData = await apiClient.get("/analysis/latest");
+    const analysisData = await apiClient.get("/api/analysis/latest");
 
     // Validar resposta
     const validated = AnalysisDataSchema.parse(analysisData);

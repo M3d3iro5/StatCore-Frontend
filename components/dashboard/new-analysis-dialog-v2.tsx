@@ -96,7 +96,7 @@ export function NewAnalysisDialogV2({
   async function loadSpreadsheets() {
     try {
       setIsLoading(true);
-      const data = (await apiClient.get("/spreadsheets/list")) as any;
+      const data = (await apiClient.get("/api/spreadsheets/list")) as any;
       setSpreadsheets(data.spreadsheets || []);
     } catch (error) {
       console.error("Erro ao carregar planilhas:", error);

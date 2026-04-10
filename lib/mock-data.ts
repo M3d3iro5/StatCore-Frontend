@@ -1,18 +1,18 @@
-import type { DashboardData } from "./types"
+import type { DashboardData } from "./types";
 
 function generateTemporalPrediction() {
-  const data = []
+  const data = [];
   for (let day = 0; day <= 365; day += 15) {
-    const mean = 8.2 + (day / 365) * 4.8
-    const variance = 0.5 + (day / 365) * 1.5
+    const mean = 8.2 + (day / 365) * 4.8;
+    const variance = 0.5 + (day / 365) * 1.5;
     data.push({
       day,
       mean: parseFloat(mean.toFixed(2)),
       max: parseFloat((mean + variance).toFixed(2)),
       min: parseFloat((mean - variance).toFixed(2)),
-    })
+    });
   }
-  return data
+  return data;
 }
 
 export const mockData: DashboardData = {
@@ -52,28 +52,40 @@ export const mockData: DashboardData = {
   ],
 
   recommendations: [
-    { type: "warning", message: "Risco moderado detectado - Programar monitoramento em 30 dias" },
-    { type: "success", message: "Margens de seguranca dentro dos limites aceitaveis" },
+    {
+      type: "warning",
+      message: "Risco moderado detectado - Programar monitoramento em 30 dias",
+    },
+    {
+      type: "success",
+      message: "Margens de seguranca dentro dos limites aceitaveis",
+    },
     { type: "info", message: "Inspecao visual recomendada ate 28/04/2026" },
-    { type: "critical", message: "Tendencia de degradacao acelerada nos ultimos 90 dias" },
-    { type: "info", message: "Proxima analise completa agendada para 15/03/2026" },
+    {
+      type: "critical",
+      message: "Tendencia de degradacao acelerada nos ultimos 90 dias",
+    },
+    {
+      type: "info",
+      message: "Proxima analise completa agendada para 15/03/2026",
+    },
   ],
-}
+};
 
 export function getERFColor(erf: number): string {
-  if (erf > 0.8) return "#10B981"
-  if (erf > 0.6) return "#F59E0B"
-  return "#EF4444"
+  if (erf < 0.6) return "#10B981";
+  if (erf <= 0.8) return "#F59E0B";
+  return "#EF4444";
 }
 
 export function getERFStatus(erf: number): string {
-  if (erf > 0.8) return "OK"
-  if (erf > 0.6) return "ATENCAO"
-  return "CRITICO"
+  if (erf < 0.6) return "OK";
+  if (erf <= 0.8) return "ATENCAO";
+  return "CRITICO";
 }
 
 export function getERFLabel(erf: number): string {
-  if (erf > 0.8) return "Seguro"
-  if (erf > 0.6) return "Monitorar"
-  return "Intervencao Necessaria"
+  if (erf < 0.6) return "Seguro";
+  if (erf <= 0.8) return "Monitorar";
+  return "Intervencao Necessaria";
 }

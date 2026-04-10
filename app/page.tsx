@@ -22,24 +22,31 @@ const ERFGauge = dynamic(
     })),
   { ssr: false },
 );
-const TemporalChart = dynamic(
+const PerdaParedeChart = dynamic(
   () =>
-    import("@/components/dashboard/temporal-chart").then((m) => ({
-      default: m.TemporalChart,
+    import("@/components/dashboard/perda-parede-chart").then((m) => ({
+      default: m.PerdaParedeChart,
     })),
   { ssr: false },
 );
-const ExponentialChart = dynamic(
+const DadosSinteticosChart = dynamic(
   () =>
-    import("@/components/dashboard/exponential-chart").then((m) => ({
-      default: m.ExponentialChart,
+    import("@/components/dashboard/dados-sinteticos-chart").then((m) => ({
+      default: m.DadosSinteticosChart,
     })),
   { ssr: false },
 );
-const HistoryChart = dynamic(
+const VidaRemanascenteCards = dynamic(
   () =>
-    import("@/components/dashboard/history-chart").then((m) => ({
-      default: m.HistoryChart,
+    import("@/components/dashboard/vida-remanescente-cards").then((m) => ({
+      default: m.VidaRemanascenteCards,
+    })),
+  { ssr: false },
+);
+const ProbabilidadesChart = dynamic(
+  () =>
+    import("@/components/dashboard/probabilidades-chart").then((m) => ({
+      default: m.ProbabilidadesChart,
     })),
   { ssr: false },
 );
@@ -211,39 +218,41 @@ function DashboardContent({ dialogOpen, onOpenChange }: DashboardContentProps) {
         <KPICards data={displayData.lastAnalysis} />
       </section>
 
-      {/* ERF Gauge + Temporal Chart */}
+      {/* ERF Gauge */}
       <section
-        className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-5"
-        aria-label="Gauge ERF e previsoes"
+        className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-4"
+        aria-label="Status ERF"
       >
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
           <ERFGauge value={displayData.lastAnalysis.erf} />
         </div>
         <div className="lg:col-span-3">
-          <TemporalChart data={displayData.temporalPrediction} />
-        </div>
-      </section>
-
-      {/* Exponential + History Charts */}
-      <section
-        className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2"
-        aria-label="Graficos de analise"
-      >
-        <ExponentialChart data={displayData.exponentialFit} />
-        <HistoryChart data={displayData.erfHistory} />
-      </section>
-
-      {/* Data Table + Recommendations */}
-      <section
-        className="mt-4 grid grid-cols-1 gap-4 xl:grid-cols-3"
-        aria-label="Dados e recomendacoes"
-      >
-        <div className="xl:col-span-2">
-          <DataTable />
-        </div>
-        <div>
           <Recommendations data={displayData.recommendations} />
         </div>
+      </section>
+
+      {/* Perda de Parede - Gráfico Principal */}
+      <section className="mt-6" aria-label="Perda de parede">
+        <PerdaParedeChart />
+      </section>
+
+      {/* Vida Remanescente - Cards KPI */}
+      <section className="mt-6" aria-label="Vida remanescente">
+        <VidaRemanascenteCards />
+      </section>
+
+      {/* Dados Sintéticos + Probabilidades */}
+      <section
+        className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2"
+        aria-label="Síntese de dados e probabilidades"
+      >
+        <DadosSinteticosChart />
+        <ProbabilidadesChart />
+      </section>
+
+      {/* Data Table */}
+      <section className="mt-6" aria-label="Dados históricos">
+        <DataTable />
       </section>
 
       {/* Nova Análise Dialog */}

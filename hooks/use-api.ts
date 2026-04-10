@@ -74,7 +74,9 @@ export function useApi<T = any>(
  * Hook específico para análises
  */
 export function useAnalysis() {
-  const { data, loading, error, execute, refetch } = useApi("/analysis/latest");
+  const { data, loading, error, execute, refetch } = useApi(
+    "/api/analysis/latest",
+  );
 
   return {
     analysisData: data,
@@ -93,6 +95,64 @@ export function usePredictions(days: number = 30) {
 
   return {
     predictions: data,
+    isLoading: loading,
+    error,
+    refetch,
+  };
+}
+
+/**
+ * Hook para Perda de Parede (Gráfico Temporal)
+ */
+export function usePerdaParede() {
+  const { data, loading, error, refetch } = useApi("/api/perda-parede");
+
+  return {
+    perdaParede: data,
+    isLoading: loading,
+    error,
+    refetch,
+  };
+}
+
+/**
+ * Hook para Dados Sintéticos
+ */
+export function useDadosSinteticos(numPontos: number = 50) {
+  const { data, loading, error, refetch } = useApi(
+    `/api/dados-sinteticos?num_pontos=${numPontos}`,
+  );
+
+  return {
+    dadosSinteticos: data,
+    isLoading: loading,
+    error,
+    refetch,
+  };
+}
+
+/**
+ * Hook para Vida Remanescente
+ */
+export function useVidaRemanescente() {
+  const { data, loading, error, refetch } = useApi("/api/vida-remanescente");
+
+  return {
+    vidaRemanescente: data,
+    isLoading: loading,
+    error,
+    refetch,
+  };
+}
+
+/**
+ * Hook para Probabilidades de Risco
+ */
+export function useProbabilidades() {
+  const { data, loading, error, refetch } = useApi("/api/probabilidades");
+
+  return {
+    probabilidades: data,
     isLoading: loading,
     error,
     refetch,
