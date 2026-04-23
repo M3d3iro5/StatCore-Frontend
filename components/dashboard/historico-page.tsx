@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, AlertCircle, Calendar, Download } from "lucide-react";
+import { getHistoricoStatusBadge } from "@/lib/mock-data";
 
 interface Analysis {
   date: string;
@@ -127,14 +128,24 @@ export function HistoricoPage() {
                       <td className="py-3 px-4">
                         <Badge
                           variant={
-                            analysis.status === "good"
+                            getHistoricoStatusBadge(analysis.erfValue) ===
+                            "good"
                               ? "default"
-                              : analysis.status === "warning"
-                                ? "secondary"
+                              : getHistoricoStatusBadge(analysis.erfValue) ===
+                                  "warning"
+                                ? "outline"
                                 : "destructive"
                           }
+                          className={
+                            getHistoricoStatusBadge(analysis.erfValue) ===
+                            "warning"
+                              ? "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20"
+                              : ""
+                          }
                         >
-                          {analysis.status.toUpperCase()}
+                          {getHistoricoStatusBadge(
+                            analysis.erfValue,
+                          ).toUpperCase()}
                         </Badge>
                       </td>
                       <td className="py-3 px-4 text-right">

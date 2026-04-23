@@ -5,7 +5,12 @@ import { useState } from "react";
 import { Calendar, Download, Plus } from "lucide-react";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { Button } from "@/components/ui/button";
-import { useAnalysis } from "@/hooks/use-api";
+import {
+  useAnalysis,
+  usePerdaParede,
+  useVidaRemanescente,
+  useDadosSinteticos,
+} from "@/hooks/use-api";
 
 // Importar componentes dinamicamente sem SSR
 const KPICards = dynamic(
@@ -40,13 +45,6 @@ const VidaRemanascenteCards = dynamic(
   () =>
     import("@/components/dashboard/vida-remanescente-cards").then((m) => ({
       default: m.VidaRemanascenteCards,
-    })),
-  { ssr: false },
-);
-const ProbabilidadesChart = dynamic(
-  () =>
-    import("@/components/dashboard/probabilidades-chart").then((m) => ({
-      default: m.ProbabilidadesChart,
     })),
   { ssr: false },
 );
@@ -108,7 +106,11 @@ interface DashboardContentProps {
 }
 
 function DashboardContent({ dialogOpen, onOpenChange }: DashboardContentProps) {
+  const [updateKey, setUpdateKey] = useState(0);
   const { analysisData, isLoading, error, refetch } = useAnalysis();
+  const { refetch: refetchPerdaParede } = usePerdaParede();
+  const { refetch: refetchVidaRemanescente } = useVidaRemanescente();
+  const { refetch: refetchDadosSinteticos } = useDadosSinteticos();
 
   // Usar dados da API ou fallback com formato correto
   const defaultData = {
@@ -134,9 +136,9 @@ function DashboardContent({ dialogOpen, onOpenChange }: DashboardContentProps) {
         lastAnalysis: {
           date: analysisData.lastAnalysis?.date || new Date().toISOString(),
           erf: analysisData.lastAnalysis?.erfValue ?? 0.75,
-          depth: 4.2, // placeholder
-          length: 125.4, // placeholder
-          thickness: 12.7, // placeholder
+          depth: analysisData.lastAnalysis?.depth ?? 4.2,
+          length: analysisData.lastAnalysis?.length ?? 125.4,
+          thickness: analysisData.lastAnalysis?.thickness ?? 12.7,
           status: (analysisData.lastAnalysis?.status || "warning") as any,
         },
         temporalPrediction: Array.isArray(analysisData.temporalPrediction)
@@ -227,27 +229,23 @@ function DashboardContent({ dialogOpen, onOpenChange }: DashboardContentProps) {
           <ERFGauge value={displayData.lastAnalysis.erf} />
         </div>
         <div className="lg:col-span-3">
-          <Recommendations data={displayData.recommendations} />
+          <Recommendations key={`recom-${updateKey}`} />
         </div>
       </section>
 
       {/* Perda de Parede - Gráfico Principal */}
       <section className="mt-6" aria-label="Perda de parede">
-        <PerdaParedeChart />
+        <PerdaParedeChart key={`perda-${updateKey}`} />
       </section>
 
       {/* Vida Remanescente - Cards KPI */}
       <section className="mt-6" aria-label="Vida remanescente">
-        <VidaRemanascenteCards />
+        <VidaRemanascenteCards key={`vida-${updateKey}`} />
       </section>
 
-      {/* Dados Sintéticos + Probabilidades */}
-      <section
-        className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2"
-        aria-label="Síntese de dados e probabilidades"
-      >
-        <DadosSinteticosChart />
-        <ProbabilidadesChart />
+      {/* Dados Sintéticos */}
+      <section className="mt-6" aria-label="Síntese de dados">
+        <DadosSinteticosChart key={`dados-${updateKey}`} />
       </section>
 
       {/* Data Table */}
@@ -260,8 +258,30 @@ function DashboardContent({ dialogOpen, onOpenChange }: DashboardContentProps) {
         open={dialogOpen}
         onOpenChange={onOpenChange}
         onSuccess={() => {
-          // Recarregar dados após sucessor
-          refetch();
+          // 🔄 Recarregar TODOS os dados da dashboard após análise
+          console.log(
+            "[PAGE] 🔄 Triggers refetch para todos os hooks após análise sucesso",
+          );
+
+          // Executar todos os refetch em paralelo
+          Promise.all([
+            refetch(),
+            refetchPerdaParede(),
+            refetchVidaRemanescente(),
+            refetchDadosSinteticos(),
+          ])
+            .then(() => {
+              // ✅ Força re-render dos componentes APÓS TODOS os refetch completarem
+              setUpdateKey((prev) => prev + 1);
+              console.log("[PAGE] ✅ Componentes remontados com dados novos");
+            })
+            .catch((err) => {
+              console.error("[PAGE] ❌ Erro ao refetch:", err);
+              // Mesmo com erro, tenta remontar os componentes
+              setUpdateKey((prev) => prev + 1);
+            });
+
+          console.log("[PAGE] ✅ Todos os hooks disparados para refetch");
         }}
       />
     </>

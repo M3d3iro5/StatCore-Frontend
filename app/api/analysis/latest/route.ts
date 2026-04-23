@@ -1,29 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
-import { apiClient } from "@/lib/api-client";
-import { AnalysisDataSchema } from "@/lib/api-schemas";
 
 /**
  * GET /api/analysis/latest
- * Obtém os dados da análise mais recente do backend Python
+ * Obtém a análise mais recente processada (resultado do computador em /api/analysis/compute-result)
  */
 export async function GET(request: NextRequest) {
   try {
-    // Requisição para o backend Python
-    const analysisData = await apiClient.get("/api/analysis/latest");
+    // Verificar se há resultado de cálculo armazenado globalmente
+    const globalData = (globalThis as any).computedAnalysisResult;
 
-    // Validar resposta
-    const validated = AnalysisDataSchema.parse(analysisData);
+    if (globalData) {
+      console.log("[API LATEST] Retornando análise global armazenada");
+      return NextResponse.json(
+        {
+          success: true,
+          data: globalData,
+          timestamp: new Date().toISOString(),
+        },
+        { status: 200 },
+      );
+    }
 
+    // Se não houver análise em memória, retornar dados padrão
+    const defaultData = {
+      lastAnalysis: {
+        date: new Date().toISOString(),
+        erfValue: 0.75,
+        status: "warning",
+        confidence: 0.8,
+      },
+      temporalPrediction: [],
+      exponentialFit: { coefficient: 0, exponent: 0, r_squared: 0 },
+      erfHistory: [],
+      recommendations: [
+        {
+          type: "info",
+          message: "Conectando com backend e aguardando primeira análise...",
+        },
+      ],
+    };
+
+    console.log("[API LATEST] Retornando dados padrão");
     return NextResponse.json(
       {
         success: true,
-        data: validated,
+        data: defaultData,
         timestamp: new Date().toISOString(),
       },
       { status: 200 },
     );
   } catch (error: any) {
-    console.error("[API ANALYSIS] Erro:", error.message);
+    console.error("[API ANALYSIS LATEST] Erro:", error.message);
 
     return NextResponse.json(
       {

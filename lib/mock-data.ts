@@ -54,38 +54,60 @@ export const mockData: DashboardData = {
   recommendations: [
     {
       type: "warning",
-      message: "Risco moderado detectado - Programar monitoramento em 30 dias",
+      message:
+        "Agendar pig de limpeza nos próximos 15 dias para remover depósitos e incrustações",
     },
     {
       type: "success",
-      message: "Margens de seguranca dentro dos limites aceitaveis",
+      message:
+        "Realizar inspeção visual completa e teste de vazamento a cada mês",
     },
-    { type: "info", message: "Inspecao visual recomendada ate 28/04/2026" },
+    {
+      type: "warning",
+      message:
+        "Manutenção preventiva quinzenal com limpeza e lubrificação de válvulas",
+    },
     {
       type: "critical",
-      message: "Tendencia de degradacao acelerada nos ultimos 90 dias",
+      message:
+        "Realizar ultrasom de espessura de parede em pontos críticos - risco de falha acima de 0.8 ERF",
     },
     {
-      type: "info",
-      message: "Proxima analise completa agendada para 15/03/2026",
+      type: "success",
+      message:
+        "Monitoramento contínuo com estimativa de vida remanescente e análise de tendências",
     },
   ],
 };
 
 export function getERFColor(erf: number): string {
-  if (erf < 0.6) return "#10B981";
-  if (erf <= 0.8) return "#F59E0B";
-  return "#EF4444";
+  if (erf >= 0.8) return "#EF4444";
+  if (erf >= 0.6) return "#F59E0B";
+  return "#10B981";
 }
 
 export function getERFStatus(erf: number): string {
-  if (erf < 0.6) return "OK";
-  if (erf <= 0.8) return "ATENCAO";
-  return "CRITICO";
+  if (erf >= 0.8) return "CRITICO";
+  if (erf >= 0.6) return "ATENCAO";
+  return "OK";
 }
 
 export function getERFLabel(erf: number): string {
-  if (erf < 0.6) return "Seguro";
-  if (erf <= 0.8) return "Monitorar";
-  return "Intervencao Necessaria";
+  if (erf >= 0.8) return "Intervencao Necessaria";
+  if (erf >= 0.6) return "Monitorar";
+  return "Seguro";
+}
+
+export function getERFStatusCode(erf: number): "OK" | "ATTENTION" | "CRITICAL" {
+  if (erf >= 0.8) return "CRITICAL";
+  if (erf >= 0.6) return "ATTENTION";
+  return "OK";
+}
+
+export function getHistoricoStatusBadge(
+  erfValue: number,
+): "good" | "warning" | "critical" {
+  if (erfValue >= 0.8) return "critical";
+  if (erfValue >= 0.6) return "warning";
+  return "good";
 }

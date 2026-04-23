@@ -96,8 +96,8 @@ export function NewAnalysisDialogV2({
   async function loadSpreadsheets() {
     try {
       setIsLoading(true);
-      const data = (await apiClient.get("/api/spreadsheets/list")) as any;
-      setSpreadsheets(data.spreadsheets || []);
+      const data = (await apiClient.get("/spreadsheets/list")) as any;
+      setSpreadsheets(data.planilhas || data.spreadsheets || []);
     } catch (error) {
       console.error("Erro ao carregar planilhas:", error);
       toast({
@@ -115,20 +115,62 @@ export function NewAnalysisDialogV2({
     try {
       setIsLoading(true);
 
-      const result = (await apiClient.post(
-        `/analysis/spreadsheet/fromdb?arquivo_nome=${fileName}`,
-        {},
+      // 1️⃣ Processar arquivo
+      console.log(
+        `[ANÁLISE] Iniciando POST /analysis/spreadsheet/fromdb com arquivo: ${fileName}`,
+      );
+      const postResult = (await apiClient.post(`/analysis/spreadsheet/fromdb`, {
+        arquivo_nome: fileName,
+      })) as any;
+
+      console.log(
+        `[ANÁLISE] ✅ POST concluído. Total medidas: ${postResult.total_medidas}`,
+      );
+
+      toast({
+        title: "✅ Arquivo processado!",
+        description: `${postResult.total_medidas} medições processadas. Aguardando dados...`,
+      });
+
+      // Salvar resultado do cálculo
+      await apiClient.post("/api/analysis/compute-result", postResult);
+
+      // 2️⃣ ESPERAR um pouco para backend persistir dados
+      console.log(
+        "[ANÁLISE] Aguardando 500ms antes de buscar dados atualizados...",
+      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 3️⃣ Buscar IMEDIATAMENTE dados frescos da análise
+      console.log(
+        "[ANÁLISE] GET /api/analysis/latest para obter dados atualizados",
+      );
+      const latestAnalysis = (await apiClient.get(
+        "/api/analysis/latest",
       )) as any;
+
+      console.log("[ANÁLISE] ✅ Dados da análise recebidos:", {
+        erfScore: latestAnalysis?.dashboardData?.indicators?.erfScore,
+        erfStatus: latestAnalysis?.dashboardData?.indicators?.erfStatus,
+        comprimento: latestAnalysis?.dashboardData?.indicators?.comprimento,
+        profundidade: latestAnalysis?.dashboardData?.indicators?.profundidade,
+        vidaRemanescente:
+          latestAnalysis?.dashboardData?.calculatedMetrics?.vidaRemanescente,
+        recommendationsCount: latestAnalysis?.recommendations?.length || 0,
+      });
+
+      // 4️⃣ Passar dados frescos para refetch no parent
+      onSuccess?.(latestAnalysis);
 
       toast({
         title: "✅ Análise concluída!",
-        description: `${result.total_medidas} medições processadas com cálculos reais`,
+        description: `Dashboard atualizada com últimos dados`,
       });
 
-      onSuccess?.(result);
       onOpenChange(false);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao processar";
+      console.error("[ANÁLISE] ❌ Erro:", msg);
       toast({
         title: "❌ Erro",
         description: msg,
@@ -156,22 +198,69 @@ export function NewAnalysisDialogV2({
       formData.append("arquivo", selectedFile);
       formData.append("dext_mm", "323.85");
 
-      const result = (await apiClient.post("/analysis/spreadsheet", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
+      // 1️⃣ Processar arquivo via upload
+      console.log(
+        `[ANÁLISE] Iniciando POST /analysis/spreadsheet com arquivo: ${selectedFile.name}`,
+      );
+      const postResult = (await apiClient.post(
+        "/analysis/spreadsheet",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         },
-      })) as any;
+      )) as any;
+
+      console.log(
+        `[ANÁLISE] ✅ POST concluído. Total medidas: ${postResult.total_medidas}`,
+      );
 
       toast({
-        title: "✅ Arquivo processado!",
-        description: `${result.total_medidas} medições analisadas`,
+        title: "✅ Arquivo enviado!",
+        description: `${postResult.total_medidas} medições analisadas. Aguardando dados...`,
       });
 
-      onSuccess?.(result);
+      // Salvar resultado do cálculo
+      await apiClient.post("/api/analysis/compute-result", postResult);
+
+      // 2️⃣ ESPERAR um pouco para backend persistir dados
+      console.log(
+        "[ANÁLISE] Aguardando 500ms antes de buscar dados atualizados...",
+      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 3️⃣ Buscar IMEDIATAMENTE dados frescos da análise
+      console.log(
+        "[ANÁLISE] GET /api/analysis/latest para obter dados atualizados",
+      );
+      const latestAnalysis = (await apiClient.get(
+        "/api/analysis/latest",
+      )) as any;
+
+      console.log("[ANÁLISE] ✅ Dados da análise recebidos:", {
+        erfScore: latestAnalysis?.dashboardData?.indicators?.erfScore,
+        erfStatus: latestAnalysis?.dashboardData?.indicators?.erfStatus,
+        comprimento: latestAnalysis?.dashboardData?.indicators?.comprimento,
+        profundidade: latestAnalysis?.dashboardData?.indicators?.profundidade,
+        vidaRemanescente:
+          latestAnalysis?.dashboardData?.calculatedMetrics?.vidaRemanescente,
+        recommendationsCount: latestAnalysis?.recommendations?.length || 0,
+      });
+
+      // 4️⃣ Passar dados frescos para refetch no parent
+      onSuccess?.(latestAnalysis);
+
+      toast({
+        title: "✅ Análise concluída!",
+        description: `Dashboard atualizada com últimos dados`,
+      });
+
       onOpenChange(false);
       setSelectedFile(null);
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao enviar";
+      console.error("[ANÁLISE] ❌ Erro:", msg);
       toast({
         title: "❌ Erro",
         description: msg,
@@ -187,7 +276,9 @@ export function NewAnalysisDialogV2({
     try {
       setIsLoading(true);
 
-      const result = (await apiClient.post("/analysis/json", {
+      // 1️⃣ Processar dados manuais
+      console.log("[ANÁLISE] Iniciando POST /analysis/json com dados manuais");
+      const postResult = (await apiClient.post("/analysis/json", {
         medidas: [
           {
             posicao_m: 1,
@@ -199,16 +290,53 @@ export function NewAnalysisDialogV2({
         ],
       })) as any;
 
+      console.log("[ANÁLISE] ✅ POST concluído");
+
       toast({
-        title: "✅ Análise realizada!",
-        description: `Medição processada com cálculos reais (B31G 2012)`,
+        title: "✅ Dados processados!",
+        description: `Medição analisada. Aguardando dados...`,
       });
 
-      onSuccess?.(result);
+      // Salvar resultado do cálculo
+      await apiClient.post("/api/analysis/compute-result", postResult);
+
+      // 2️⃣ ESPERAR um pouco para backend persistir dados
+      console.log(
+        "[ANÁLISE] Aguardando 500ms antes de buscar dados atualizados...",
+      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // 3️⃣ Buscar IMEDIATAMENTE dados frescos da análise
+      console.log(
+        "[ANÁLISE] GET /api/analysis/latest para obter dados atualizados",
+      );
+      const latestAnalysis = (await apiClient.get(
+        "/api/analysis/latest",
+      )) as any;
+
+      console.log("[ANÁLISE] ✅ Dados da análise recebidos:", {
+        erfScore: latestAnalysis?.dashboardData?.indicators?.erfScore,
+        erfStatus: latestAnalysis?.dashboardData?.indicators?.erfStatus,
+        comprimento: latestAnalysis?.dashboardData?.indicators?.comprimento,
+        profundidade: latestAnalysis?.dashboardData?.indicators?.profundidade,
+        vidaRemanescente:
+          latestAnalysis?.dashboardData?.calculatedMetrics?.vidaRemanescente,
+        recommendationsCount: latestAnalysis?.recommendations?.length || 0,
+      });
+
+      // 4️⃣ Passar dados frescos para refetch no parent
+      onSuccess?.(latestAnalysis);
+
+      toast({
+        title: "✅ Análise concluída!",
+        description: `Dashboard atualizada com últimos dados`,
+      });
+
       onOpenChange(false);
       manualForm.reset();
     } catch (error) {
       const msg = error instanceof Error ? error.message : "Erro ao processar";
+      console.error("[ANÁLISE] ❌ Erro:", msg);
       toast({
         title: "❌ Erro",
         description: msg,
